@@ -10,7 +10,8 @@ from pathlib import Path
 this_dir = os.path.dirname(os.path.abspath(__file__)) + '/'
 sys.path.append(this_dir)
 
-import db_functions as dbf
+'''IMPORT ONLY IF YOU HAVE THE RIGHT CREDENTIALS'''
+# import db_functions as dbf
 
 
 
@@ -78,16 +79,16 @@ class BetaMatrix:
     Class for performing classical bayesian bandits where item = creative = ad = game_key = line_item_id = AdGroupId
     """
 
-    def __init__(self, verbose=False, testing=False):
+    def __init__(self, verbose=False, testing=False, local = None):
         """
         Initilializing beta_matrix and items it contains
-        initial_beta_matrix is of shape [Nitems, 2] and items are all the game keys for this campaign, with [a, b] for each game-key
         """
 
         self.data_dict = None
         self.kpi_campaign = None
         self.verbose = verbose
         self.testing = testing
+        self.local = local
 
 
         # load from DB memory
@@ -107,23 +108,20 @@ class BetaMatrix:
         preloads beta functions from a DB/file somwhere
         connect to DB/file
         load content
-        add content using self._add_item
         """
-
-        self.data_dict = dbf.restore_from_db()
-
+        if self.local!=None:
+            self.data_dict = self.local
+        else:
+            self.data_dict = dbf.restore_from_db()
         pass
 
     def _load_latest_kpis(self):
         """
         CONNECT TO A DB and get this information 
         """
-        #list of kpis in order highest to lowest [paypoint, kpi1, kpi2] : [10, 3, 1]
-
         kpi_campaign = {}
 
         for item_dict in self.data_dict:
-            # print(item_dict)
             if item_dict['item_group_id'] not in kpi_campaign:
                 kpi_campaign[item_dict['item_group_id']] = {'num_engagements':1} 
 
@@ -182,7 +180,7 @@ class BetaMatrix:
         items, vals = self.draw_all_items()
         return items[0], float(vals[0])
 
-    def draw_all_items(self,  items=None, trial_key='num_impressions', optimizer=None, local=None, dist=None):
+    def draw_all_items(self,  items=None, trial_key='num_impressions'):
         """
         Function uses the randomly drawn distributions from the previous function(rand_draw) to return index of the game/item with the highest probability of success. 
 
@@ -203,10 +201,7 @@ class BetaMatrix:
         """
 
         # update_bandit information and KPI
-        if local:
-            self.data_dict = local
-        else:
-            self._update_band()
+        self._update_band()
 
         # draw from all beta functions
         rand_draws = {}
@@ -216,6 +211,8 @@ class BetaMatrix:
             # get the "target" of this campaign
             c_id = item_dict['item_group_id']
             if self.testing==True:
+                pass
+            elif self.local!=None:
                 pass
             else:
                 cost = item_dict['daily_spend']
@@ -232,7 +229,7 @@ class BetaMatrix:
                     continue
 
             num_trials += item_dict[trial_key]*np.sum(list(succ.values()))
-
+            
             rnds = [ np.random.beta(1 + num_sucss, 1 + num_trials - num_sucss) for r in range(100) ]
             rnd = np.array(rnds).mean()
             rand_draws[item_dict['item_id']] = float(rnd)
