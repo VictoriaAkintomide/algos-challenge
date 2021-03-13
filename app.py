@@ -100,25 +100,6 @@ def update_beta_function_from_json():
     return json.dumps(output), 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
-@app.route('/compare_keys', methods=['POST', 'GET'])
-def compare_pdfs():
-    proceed, json_list = process_input()
-    items = json_list.get('items', [])
-
-    if proceed is False:
-        output = {"success": False, "message": f"unable to process input"}
-
-    if len(items) > 1:
-        output = {"success": True}
-        for i, itm in enumerate(items):
-            output[f"id{i}"] = items[i]
-    else:
-
-        output = {"success": False, "message": f"more than one item is needed for comparison"}
-    return json.dumps(output), 200, {'Content-Type': 'text/plain; charset=utf-8'}
-
-
-
 
 @app.route('/pull_levers', methods=['POST', 'GET'])
 def get_all_items_probabilities():
@@ -178,39 +159,6 @@ def dump_beta_matrix():
     bandit_data = BETA_MATRIX.dump_data(item_id_list = item_id_list, item_group_id_list = item_group_id_list)
     output = {"success": True, "bandit_data": bandit_data}
 
-    return json.dumps(output), 200, {'Content-Type': 'text/plain; charset=utf-8'}
-
-
-@app.route("/example_swagger")
-def example_swagger():
-    """
-    An endpoint that isn't using method view
-    ---
-    tags:
-    - hacks
-    responses:
-      200:
-        description: Hacked some hacks
-        schema:
-          id: Hack
-          properties:
-            hack:
-              type: string
-              description: it's a hack
-            subitems:
-              type: array
-              items:
-                schema:
-                  id: SubItem
-                  properties:
-                    bla:
-                      type: string
-                      description: Bla
-                    blu:
-                      type: integer
-                      description: Blu
-    """
-    output = {"success": True}
     return json.dumps(output), 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
